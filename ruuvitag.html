@@ -3,9 +3,10 @@
         category: 'Bluetooth',
         color: '#DEBD5C',
         defaults: {
-            name: { value: "RuuviTag" },
-            interval: { value: 10, validate: RED.validators.number() },
-            prefix: { value: '' }
+            name: { value: "ruuvitag" },
+            interval: { value: 60, validate: RED.validators.number() },
+            scantime: { value: 10, validata: RED.validators.number() },
+            prefix: { value: 'sensors/ruuvitag/' }
         },
         inputs:0,
         outputs:1,
@@ -20,12 +21,19 @@
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
-	<br>
-	<label for="node-input-interval"><i class="icon-tag"></i> Interval</label>
-        <input type="text" id="node-input-interval" placeholder="Interval">
-	<br>
+    </div>
+    <div class="form-row">
+        <label for="node-input-interval"><i class="icon-tag"></i> Scan interval</label>
+        <input type="text" id="node-input-interval" placeholder="Scan interval">
+    </div>
+    <div class="form-row">
+        <label for="node-input-scantime"><i class="icon-tag"></i> Scan time</label>
+        <input type="text" id="node-input-scantime" placeholder="Scan time">
+    </div>
+    <div class="form-row">
         <label for="node-input-prefix"><i class="icon-tag"></i> Topic prefix</label>
         <input type="text" id="node-input-prefix" placeholder="Topic prefix">
+    </div>
 </script>
 
 <script type="text/html" data-help-name="ruuvitag">
