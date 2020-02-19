@@ -1,7 +1,7 @@
 const ruuvi = require('node-ruuvitag');
 const noble = require('@abandonware/noble');
 
-module.exports = function(RED) {
+module.exports = function (RED) {
     function RuuvitagNode(config) {
         RED.nodes.createNode(this, config);
         this.config = config;
@@ -21,7 +21,7 @@ module.exports = function(RED) {
             done();
         });
 
-	    ruuvi.on('found', tag => {
+        ruuvi.on('found', tag => {
             let tagId = tag.id;
             let previousTime = 0;
             node.debug('ruuvitag ' + tag.id + ' found');
@@ -37,7 +37,7 @@ module.exports = function(RED) {
             });
         });
 
-	    setInterval(() => {
+        setInterval(() => {
             node.debug('start scanning');
             noble.startScanning();
             setTimeout(() => {
