@@ -6,42 +6,82 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         this.config = config;
         let node = this;
-
-        noble.stopScanning();
+        let scanIntervalId = null;
+        let scanTimeoutId = null;
 
         node.debug('config is ' + JSON.stringify(node.config));
 
         node.on('close', (done) => {
             node.debug('closing');
-            noble.stopScanning();
-            // hack: clear out found tags so that found event gets fired again 
+
+            if (scanIntervalId) {
+                clearInterval(scanIntervalId);
+                scanIntervalId = null;
+            }
+
+            if (scanTimeoutId) {
+                clearInterval(scanTimeoutId);
+                scanTimeoutId = null;
+            }
+
+            // remove current 'found' listener
+            ruuvi.listeners('found').forEach(listener => {
+                ruuvi.off('found', listener);
+            });
+
+            // and tag 'updated' listeners for all tags
+            ruuvi._foundTags.forEach(tag => {
+                tag.listeners('updated').forEach(listener => {
+                    tag.off('updated', listener);
+                });
+            });
+
+            // hack: clear out found tags so that found event gets fired again
             // when node is restarted (during flow re-deploy)
             ruuvi._foundTags = [];
             ruuvi._tagLookup = {};
+
             done();
         });
 
         ruuvi.on('found', tag => {
             let tagId = tag.id;
             let previousTime = 0;
-            node.debug('ruuvitag ' + tag.id + ' found');
+            node.debug(tag.id + ' found');
             tag.on('updated', data => {
-                node.debug('got ruuvitag data for ' + tagId);
+                node.debug('got data for ' + tagId);
                 let currentTime = Date.now();
-                if ((currentTime - previousTime) > (node.config.interval * 1000)) {
+                if ((currentTime - previousTime) > (node.config.interval * 950)) {
                     let msg = { topic: node.config.prefix + tagId, payload: data };
-                    node.debug('sending ruuvitag data ' + JSON.stringify(msg));
+                    node.debug('sending data ' + JSON.stringify(msg));
                     node.send(msg);
                     previousTime = currentTime;
                 }
             });
         });
 
-        setInterval(() => {
-            node.debug('start scanning');
-            noble.startScanning();
-            setTimeout(() => {
+        function startScanning() {
+            if (noble.state === 'poweredOn') {
+                node.debug('start scanning');
+                noble.startScanning();
+            }
+        }
+
+        function stopScanning() {
+            if (noble.state === 'poweredOn') {
+                node.debug('stop scanning');
                 noble.stopScanning();
+            }
+        }
+
+        scanTimeoutId = setTimeout(() => {
+            stopScanning();
+        }, node.config.scantime * 1000);
+
+        scanIntervalId = setInterval(() => {
+            startScanning();
+            scanTimeoutId = setTimeout(() => {
+                stopScanning();
             }, node.config.scantime * 1000);
         }, node.config.interval * 1000);
 
